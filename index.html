@@ -23,7 +23,7 @@
 const { useState, useMemo, useEffect } = React;
 
 // =====================================================
-// 🔧 https://script.google.com/macros/s/AKfycbx3BV52Irl0QOj4flGZ0Vri0PsLqvL7icudg7dg7bp_maL6rF-km_1elkSZdulvz-2S3g/exec
+// 🔧 PASTE YOUR GOOGLE APPS SCRIPT URL HERE
 // =====================================================
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqVe5IdXrWkUuIT1wYRSj0brbAw_wygWDHXmqCXQ4iN2np1Oz1vArEItV0jCCPxFf1HQ/exec";
 // =====================================================
@@ -64,18 +64,11 @@ function getPairedId(b,all){
 async function apiCall(action, payload={}) {
   const isConfigured = SCRIPT_URL && SCRIPT_URL !== "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
   if (!isConfigured) throw new Error("NOT_CONFIGURED");
- const response = await fetch(
-    SCRIPT_URL + "?action=" + action,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8",
-      },
-      body: JSON.stringify(payload),
-    }
-  );
-
-  return await response.json();
+  const url = `${SCRIPT_URL}?action=${action}`;
+  const res = await fetch(url, { method:"POST", body: JSON.stringify(payload) });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
 }
 
 function App() {
