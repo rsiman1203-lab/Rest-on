@@ -62,19 +62,33 @@ function getPairedId(b,all){
 
 // API helpers
 async function apiCall(action, payload = {}) {
+  try {
+    const url =
+      SCRIPT_URL +
+      "?action=" + encodeURIComponent(action) +
+      "&data=" + encodeURIComponent(JSON.stringify(payload));
 
-  const url =
-    SCRIPT_URL +
-    "?action=" + action +
-    "&data=" + encodeURIComponent(
-      JSON.stringify(payload)
-    );
+    const response = await fetch(url, {
+      method: "GET",
+      mode: "cors",
+      headers: {
+        "Accept": "application/json"
+      }
+    });
 
-  const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error("HTTP_ERROR");
+    }
 
-  return await response.json();
+    const data = await response.json();
+
+    return data;
+
+  } catch (err) {
+    console.error("API ERROR:", err);
+    throw err;
+  }
 }
-
 function App() {
   const [bookings, setBookings]         = useState([]);
   const [loading, setLoading]           = useState(true);
@@ -94,17 +108,30 @@ function App() {
   // Load bookings on mount
   useEffect(() => { fetchBookings(); }, []);
 
-  async function fetchBookings() {
-    setLoading(true);
-    try {
-      const data = await apiCall("getAll");
-      setBookings(data.bookings || []);
-      setDbStatus("connected");
-    } catch(e) {
-      if (e.message === "NOT_CONFIGURED") setDbStatus("not_configured");
-      else setDbStatus("offline");
-    } finally { setLoading(false); }
+ async function fetchBookings() {
+  setLoading(true);
+
+  try {
+    const data = await apiCall("getAll");
+
+    console.log("FETCH RESULT:", data);
+
+    if (data.success === false) {
+      setDbStatus("offline");
+      return;
+    }
+
+    setBookings(data.bookings || []);
+    setDbStatus("connected");
+
+  } catch (e) {
+    console.error(e);
+    setDbStatus("offline");
+
+  } finally {
+    setLoading(false);
   }
+}
 
   function showToast(msg, type="success") { setToast({msg,type}); setTimeout(()=>setToast(null),3500); }
   function openNew()   { setEditBooking(null); setForm(emptyForm); setShowForm(true); }
